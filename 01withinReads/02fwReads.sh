@@ -7,31 +7,46 @@ rSim=~/git_repos/wgsim/wgsim
 gs=1000000
 outName=ref1M.fa
 
+mkfifo FWpipe
+
+
 echo "Writing genome..."
 #python $gSim $gs $outName
 
-echo "Generating reads..."
-#$rSim $outName $outName.21FW.fq $outName.21RW.fq -e 0 -1 21 -2 21 -R 0 -r 0 -N $(($gs/1*20))
-#$rSim $outName $outName.130FW.fq $outName.130RW.fq -e 0 -1 150 -2 150 -R 0 -r 0 -N $(($gs/130*20))
-$rSim $outName $outName.980FW.fq $outName.980RW.fq -e 0 -1 980 -2 1 -R 0 -r 0 -N $(($gs/980*20))
+echo "Generating reads and compressing..."
+$rSim $outName FWpipe /dev/null -e 0 -1 21 -2 21 -R 0 -r 0 -N $(($gs/1*100)) &
+cat FWpipe | pigz -p 3 > $outName.21FW.fq.gz 
+
+
+
+$rSim $outName FWpipe /dev/null -e 0 -1 150 -2 150 -R 0 -r 0 -N $(($gs/130*100)) &
+cat FWpipe | pigz -p 3 > $outName.150FW.fq.gz 
+
+
+
+$rSim $outName FWpipe /dev/null -e 0 -1 1000 -2 1000 -R 0 -r 0 -N $(($gs/980*100)) &
+cat FWpipe | pigz -p 3 > $outName.1kFW.fq.gz 
+
+
+rm FWpipe
 
 
 
 echo "Generating k-mer dumps..."
-kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.21FW.fq $outName.21FW .
-kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.130FW.fq $outName.130FW . 
-kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.980FW.fq $outName.980FW . 
+kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.21FW.fq.gz $outName.21FW .
+kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.150FW.fq.gz $outName.150FW . 
+kmc -k21 -m20G -t6 -ci1 -cs1000000 $outName.1kFW.fq.gz $outName.1kFW . 
 
 
 echo "Generating spectra..."
 kmc_tools transform  $outName.21FW histogram  $outName.21FW.hist -cx5000000 -ci1
-kmc_tools transform  $outName.130FW histogram  $outName.130FW.hist -cx5000000 -ci1
-kmc_tools transform  $outName.980FW histogram  $outName.980FW.hist -cx5000000 -ci1
+kmc_tools transform  $outName.150FW histogram  $outName.150FW.hist -cx5000000 -ci1
+kmc_tools transform  $outName.1kFW histogram  $outName.1kFW.hist -cx5000000 -ci1
 
 
 echo "Removing zero lines..."
 awk '{ if( $2 != 0 ){ print $0 } }' $outName.21FW.hist > $outName.21FW.hist.no0 && rm $outName.21FW.hist
-awk '{ if( $2 != 0 ){ print $0 } }' $outName.130FW.hist > $outName.130FW.hist.no0 && rm $outName.130FW.hist
-awk '{ if( $2 != 0 ){ print $0 } }' $outName.980FW.hist > $outName.980FW.hist.no0 && rm $outName.980FW.hist
+awk '{ if( $2 != 0 ){ print $0 } }' $outName.150FW.hist > $outName.150FW.hist.no0 && rm $outName.150FW.hist
+awk '{ if( $2 != 0 ){ print $0 } }' $outName.1kFW.hist > $outName.1kFW.hist.no0 && rm $outName.1kFW.hist
 
 echo "Done."

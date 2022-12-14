@@ -42,3 +42,5 @@ vignettes/*.pdf
 *fq
 *kmc_pre
 *kmc_suf
+*fq.gz
+*bam
