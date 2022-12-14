@@ -1,2 +1,2 @@
 # excess-variance
-Excess variance n k-mer spectra
+Excess variance in k-mer spectra
