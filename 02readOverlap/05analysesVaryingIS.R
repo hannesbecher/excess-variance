@@ -3,7 +3,7 @@
 
 # Load data ---------------------------------------------------------------
 
-
+library(Tetmer)
 setwd("~/git_repos/excess-variance/02readOverlap/")
 #getwd()
 is.range <- c(200, 250, 300, 350, 400, 450, 500)
@@ -48,9 +48,44 @@ sdFromSp <- function(sp){
 }
 sds <- sapply(sps, sdFromSp)
 plot(sds, seq(200, 500, by=50))
-plot(sds, seq(200, 500, by=50),
-     log="")
 
+
+# fit nb model to peaks ---------------------------------------------------
+makeLong <- function(dat){
+  rep(dat[,1], dat[,2])
+}
+head(sps[[1]]@data)
+dat1 <- makeLong(sps[[1]]@data)
+pars <- t(sapply(1:7, function(x){
+  dat <- makeLong(sps[[x]]@data)
+  glm00 <- MASS::glm.nb(dat~1)
+  c(mean=exp(coef(summary(glm00))[1]),
+    theta=glm00$theta)
+}))
+
+pars <- as.data.frame(pars)
+plot(1:7, pars$theta)
+
+
+# according to Venables and Ripley 2002, var should be mean + mean^2/theta
+vars <- sapply(sps, function(x){
+  var(makeLong(x@data))
+})
+vars
+varsVR <- apply(pars, 1, function(x) x[1] + x[1]^2/x[2])
+plot(vars, varsVR, log="") # looks like it's true
+abline(0,1, lty=2)
+plot(vars ~ seq(200, 500, by=50),
+     xlab="IS",
+     ylab="Variance",
+     ylim=c(200, 330))
+points(varsVR ~ seq(200, 500, by=50), pch=2)
+grid()
+legend("topright",
+       pch=1:2,
+       legend=c("obs", "fit"))
+
+abline(h=200)
 
 # Quantify overlap --------------------------------------------------------
 dir()
