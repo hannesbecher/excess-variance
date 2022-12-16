@@ -44,3 +44,4 @@ vignettes/*.pdf
 *kmc_suf
 *fq.gz
 *bam
+*Manifest.toml
