@@ -33,6 +33,11 @@ df <- data.frame(pars, var=varsVR, run=fs)
 df$relVar <- varsVR/varsVR[rep(c(13, 26), each=13)]
 df <- df[c(13, 1, 2, 3, 4, 5, 7, 6, 9, 11, 8, 10, 12, c(13, 1, 2, 3, 4, 5, 7, 6, 9, 11, 8, 10, 12)+13),]
 df$rep <- rep(c(0, 0.1, 0.25, 0.4, 0.55, 0.7, 1, 1.5, 2.5, 5, 10, 20, 50),2)
+write.table(df,
+            "fits.tsv",
+            col.names = T,
+            row.names = F,
+            quote = F)
 
 #png("repVar.png", width=7, height=5.5, res=150, units="in")
 plot(relVar ~ rep,
@@ -41,6 +46,13 @@ plot(relVar ~ rep,
      ylab="Rel. var compared to 0 repetition",
      col=rep(c(1, 2), each=13),
      log="")
+plot(1/theta ~ rep,
+     data=df,
+     xlab="Avg. duplicates per read",
+     ylab="Rel. var compared to 0 repetition",
+     col=rep(c(1, 2), each=13),
+     log="")
+
 grid()
 lm01 <- lm(relVar ~ rep,
            data=df)
